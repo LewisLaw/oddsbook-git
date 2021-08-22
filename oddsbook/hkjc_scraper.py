@@ -67,7 +67,7 @@ def scrap(url: str, matchparser: Callable, delay: int = 3) -> Tuple[Odds]:
 def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway:
     
     wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-    match_date=date.today() + timedelta(days = wkdiff if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) >= -1 else wkdiff + 7 )
+    match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
     cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
     oddsVal = match_element.find_elements_by_class_name("oddsVal")
     home = oddsVal[0].get_attribute("innerText")
@@ -80,7 +80,7 @@ def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway
 def parse_handicap(match_element, update_time:datetime) -> Odds_HomeDrawAway:
     
     wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-    match_date=date.today() + timedelta(days = wkdiff if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) >= -1 else wkdiff + 7 )
+    match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
     cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
     teams = ''.join(re.match("^(.*)\[.*\](\s.*\s)(.*)\[.*\]$", cteams).groups())
     handicap = r'||'.join(re.match("^.*(\[.*\])\s.*\s.*(\[.*\])$", cteams).groups())
