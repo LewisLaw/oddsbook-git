@@ -4,7 +4,7 @@ WebScraping football odds infomation from HKJC (and more to go...) periodicially
 
 Setup step:
 1. Download the package from git.
-2. pip install -r requirement.txt
+2. pip install -r requirements.txt
 3. Replace the chromedriver with the version matching the Chrome on your desktop from https://chromedriver.chromium.org/downloads.
 
 Command to one-off execution:
