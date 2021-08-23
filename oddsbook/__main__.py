@@ -4,10 +4,10 @@ from oddsbook import hkjc_scraper
 
 def run(delay: int = 3):
 
-    scrapers = (hkjc_scraper.scrap_homedrawaway, hkjc_scraper.scrap_handicap, hkjc_scraper.scrap_hilo)
+    scrapers = (hkjc_scraper.scrap_homedrawaway, hkjc_scraper.scrap_handicap, hkjc_scraper.scrap_hilo, hkjc_scraper.scrap_cornerhilo)
     
     for s in scrapers:
-        odds = s(delay)
+        odds = s(delay=delay)
         booker.populatebook(odds)
 
 import argparse

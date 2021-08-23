@@ -4,7 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
-from .model import Odds, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
+from .model import Odds, Odds_CornerHiLo, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
 import re
 
 WEEKDAY_MAP = {
@@ -28,7 +28,7 @@ WEEKDAY_MAP = {
     }
 }
 
-def scrap(url: str, matchparser: Callable, delay: int = 3) -> Tuple[Odds]:
+def scrap(url: str, matchparser: Callable, matchparserparam: dict = {}, delay: int = 3) -> Tuple[Odds]:
 
     browser = webdriver.Chrome("./chromedriver")
 
@@ -48,7 +48,7 @@ def scrap(url: str, matchparser: Callable, delay: int = 3) -> Tuple[Odds]:
 
         for m in matches:
             try:
-                o = matchparser(m, update_time=update_time)
+                o = matchparser(m, update_time=update_time, **matchparserparam)
                 oddslist += (o, )
             except:
                 pass
@@ -91,7 +91,7 @@ def parse_handicap(match_element, update_time:datetime) -> Odds_Handicap:
     return Odds_Handicap(date=match_date, teams=teams, home=home, away=away, handicap=handicap, update_time=update_time)
 
 
-def parse_hilo(match_element, update_time:datetime) -> Odds_HiLo:
+def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) -> Odds_HiLo:
     
     wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
     match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
@@ -101,15 +101,19 @@ def parse_hilo(match_element, update_time:datetime) -> Odds_HiLo:
     hi = oddsVal[0].get_attribute("innerText")
     lo = oddsVal[1].get_attribute("innerText")
 
-    return Odds_HiLo(date=match_date, teams=cteams, line=line, hi=hi, lo=lo, update_time=update_time)
+    return oddshilotype(date=match_date, teams=cteams, line=line, hi=hi, lo=lo, update_time=update_time)
 
 
 def scrap_homedrawaway(delay: int=3) -> Tuple[Odds_HomeDrawAway]: 
-    return scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway)
+    return scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway, delay=delay)
 
 
 def scrap_handicap(delay: int=3) -> Tuple[Odds_Handicap]:
-    return scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap)
+    return scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap, delay=delay)
 
 def scrap_hilo(delay: int=3) -> Tuple[Odds_HiLo]:
-    return scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo)
+    return scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo, delay=delay)
+
+def scrap_cornerhilo(delay: int=3) -> Tuple[Odds_CornerHiLo]:
+    return scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo}, delay=delay)
+

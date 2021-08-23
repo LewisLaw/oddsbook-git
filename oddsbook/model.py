@@ -24,3 +24,7 @@ class Odds_HiLo(Odds):
     line: str
     hi: float
     lo: float
+
+@dataclass
+class Odds_CornerHiLo(Odds_HiLo):
+    pass
