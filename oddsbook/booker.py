@@ -16,7 +16,7 @@ ODDSTYPE_CONFIG = {
         'attributes': ['update_time', 'line', 'hi', 'lo']
     },
     'Odds_CornerHiLo': {
-        'columnheader': '全場角球入球大細',
+        'columnheader': '全場角球大細',
         'attributes': ['update_time', 'line', 'hi', 'lo']
     }
 }
