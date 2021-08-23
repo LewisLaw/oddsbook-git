@@ -11,6 +11,10 @@ ODDSTYPE_CONFIG = {
         'columnheader': '全場讓球',
         'attributes': ['update_time', 'handicap', 'home', 'away']
     },
+    'Odds_HiLo': {
+        'columnheader': '全場入球大細',
+        'attributes': ['update_time', 'line', 'hi', 'lo']
+    }
 }
 
 

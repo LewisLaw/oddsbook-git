@@ -4,7 +4,7 @@ from oddsbook import hkjc_scraper
 
 def run(delay: int = 3):
 
-    scrapers = (hkjc_scraper.scrap_homedrawaway, hkjc_scraper.scrap_handicap)
+    scrapers = (hkjc_scraper.scrap_homedrawaway, hkjc_scraper.scrap_handicap, hkjc_scraper.scrap_hilo)
     
     for s in scrapers:
         odds = s(delay)
