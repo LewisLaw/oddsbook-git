@@ -1,4 +1,4 @@
-from typing import Callable, Tuple
+from typing import Callable, Iterable, Tuple
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -49,7 +49,7 @@ def scrap(url: str, matchparser: Callable, matchparserparam: dict = {}, delay: i
         for m in matches:
             try:
                 o = matchparser(m, update_time=update_time, **matchparserparam)
-                oddslist += (o, )
+                oddslist += o if isinstance(o, Iterable) else (o, )
             except:
                 pass
 
@@ -68,13 +68,13 @@ def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway
     
     wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
     match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
-    cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
+    teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
     oddsVal = match_element.find_elements_by_class_name("oddsVal")
     home = oddsVal[0].get_attribute("innerText")
     draw = oddsVal[1].get_attribute("innerText")
     away = oddsVal[2].get_attribute("innerText")
 
-    return Odds_HomeDrawAway(date=match_date, teams=cteams, home=home, draw=draw, away=away, update_time=update_time)
+    return Odds_HomeDrawAway(date=match_date, teams=teams, home=home, draw=draw, away=away, update_time=update_time)
 
 
 def parse_handicap(match_element, update_time:datetime) -> Odds_Handicap:
@@ -95,13 +95,21 @@ def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) ->
     
     wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
     match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
-    cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
-    line = match_element.find_element_by_class_name("cline").get_attribute("innerText")
-    oddsVal = match_element.find_elements_by_class_name("oddsVal")
-    hi = oddsVal[0].get_attribute("innerText")
-    lo = oddsVal[1].get_attribute("innerText")
+    teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
+    cline = match_element.find_element_by_class_name("cline")
+    lines = cline.find_elements_by_xpath("div[contains(@class,'LineRow')]") 
+    codds = match_element.find_elements_by_xpath("div[@class='codds']")
+    his = codds[0].find_elements_by_xpath("div[contains(@class,'LineRow')]")
+    los = codds[1].find_elements_by_xpath("div[contains(@class,'LineRow')]")
 
-    return oddshilotype(date=match_date, teams=cteams, line=line, hi=hi, lo=lo, update_time=update_time)
+    odds_list = tuple()
+    for ln, h, l in zip(lines, his, los):
+        line = ln.get_attribute("innerText")
+        hi = h.get_attribute("innerText")
+        lo = l.get_attribute("innerText")
+        odds_list += (oddshilotype(date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
+    
+    return odds_list
 
 
 def scrap_homedrawaway(delay: int=3) -> Tuple[Odds_HomeDrawAway]: 

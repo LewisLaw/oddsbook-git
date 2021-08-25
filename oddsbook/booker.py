@@ -38,6 +38,7 @@ def populatebook(oddslist: Iterable):
             if shtname not in shtnames:
                 template_sht = wb.sheets['TEMPLATE']
                 odds_sht = template_sht.copy(before=template_sht, name=shtname)
+                shtnames += [shtname]
             else:
                 odds_sht = wb.sheets[shtname]
 

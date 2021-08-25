@@ -10,5 +10,5 @@ Setup step:
 Command to one-off execution:
 - python -m oddsbook
 
-Command to repeatly running:
+Command to repeatly running (for every 10 mins for example):
 - python -m oddsbook --interval 10
