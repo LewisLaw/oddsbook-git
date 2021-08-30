@@ -30,7 +30,7 @@ WEEKDAY_MAP = {
 
 def scrap(url: str, matchparser: Callable, matchparserparam: dict = {}, delay: int = 3) -> Tuple[Odds]:
 
-    browser = webdriver.Chrome("./chromedriver")
+    browser = webdriver.Chrome("./chromedriver.exe")
 
     browser.get(url)
 
