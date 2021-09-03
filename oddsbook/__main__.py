@@ -15,28 +15,26 @@ import logging
 from datetime import datetime
 
 parser = argparse.ArgumentParser(description=r"Scrapping Odds infomation and populating to OddsBook.xlsx")
-parser.add_argument('--interval', default=0, help=r"Minutes of interval for updating odds after each run.")
-parser.add_argument('--delay', default=3, help=r"Seconds of delay on webscraping.")
-parser.add_argument('--debug', default=False, help=r"Log debug message")
+parser.add_argument('-i', '--interval', type=int, default=0, help=r"Minutes of interval for updating odds after each run.")
+parser.add_argument('-d', '--delay', type=int, default=3, help=r"Seconds of delay on webscraping.")
+parser.add_argument('--debug', action='store_true', help=r"Log debug message.")
 argv = parser.parse_args()
 
 if __name__ == "__main__":
-    
-    interval = int(argv.interval)
-    delay = int(argv.delay)
-    debug_mode = argv.debug == "True"
 
-    logging.basicConfig(filename='oddsbook.log', filemode='a', level=logging.DEBUG if debug_mode else logging.INFO)
+    print(argv)
+    logging.basicConfig(filename='oddsbook.log', filemode='a', level=logging.DEBUG if argv.debug else logging.INFO)
 
-    if interval <= 0:
-        run(delay)
+    if argv.interval <= 0:
+        run(argv.delay)
     else:
         while True:
             logging.info(f"Start Running at {datetime.now()}")
             try:
-                run(delay)
+                run(argv.delay)
                 logging.info("Run Successful!")
             except Exception as e:
                 logging.error("Exception occurred", exc_info=True)
             finally:
-                timer.sleep(interval * 60)
+                timer.sleep(argv.interval * 60)
+                
