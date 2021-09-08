@@ -30,29 +30,30 @@ WEEKDAY_MAP = {
 
 class HKJCScraperFuncs:
     
-    def __init__(self, browser:webdriver) -> None:
+    def __init__(self, browser:webdriver, delay:int = 3) -> None:
         self.browser = browser
+        self.delay = delay
 
-    def scrap_homedrawaway(self, delay: int=3) -> Tuple[Odds_HomeDrawAway]: 
-        return self.scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway, delay=delay)
+    def scrap_homedrawaway(self) -> Tuple[Odds_HomeDrawAway]: 
+        return self.scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway)
 
-    def scrap_handicap(self, delay: int=3) -> Tuple[Odds_Handicap]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap, delay=delay)
+    def scrap_handicap(self) -> Tuple[Odds_Handicap]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap)
 
-    def scrap_hilo(self, delay: int=3) -> Tuple[Odds_HiLo]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo, delay=delay)
+    def scrap_hilo(self) -> Tuple[Odds_HiLo]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo)
 
-    def scrap_cornerhilo(self, delay: int=3) -> Tuple[Odds_CornerHiLo]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo}, delay=delay)
+    def scrap_cornerhilo(self) -> Tuple[Odds_CornerHiLo]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo})
 
-    def scrap(self, url: str, matchparser: Callable, matchparserparam: dict = {}, delay: int = 3) -> Tuple[Odds]:
+    def scrap(self, url: str, matchparser: Callable, matchparserparam: dict = {}) -> Tuple[Odds]:
 
         self.browser.get(url)
 
         oddslist = tuple()
 
         while(True):
-            tables = WebDriverWait(self.browser, delay).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "couponTable")))
+            tables = WebDriverWait(self.browser, self.delay).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "couponTable")))
 
             update_time = datetime.now().replace(second=0, microsecond=0)
 
@@ -88,7 +89,7 @@ def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway
     draw = oddsVal[1].get_attribute("innerText")
     away = oddsVal[2].get_attribute("innerText")
 
-    return Odds_HomeDrawAway(date=match_date, teams=teams, home=home, draw=draw, away=away, update_time=update_time)
+    return Odds_HomeDrawAway(source='hkjc', date=match_date, teams=teams, home=home, draw=draw, away=away, update_time=update_time)
 
 
 def parse_handicap(match_element, update_time:datetime) -> Odds_Handicap:
@@ -102,7 +103,7 @@ def parse_handicap(match_element, update_time:datetime) -> Odds_Handicap:
     home = oddsVal[0].get_attribute("innerText")
     away = oddsVal[1].get_attribute("innerText")
 
-    return Odds_Handicap(date=match_date, teams=teams, home=home, away=away, handicap=handicap, update_time=update_time)
+    return Odds_Handicap(source='hkjc', date=match_date, teams=teams, home=home, away=away, handicap=handicap, update_time=update_time)
 
 
 def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) -> Odds_HiLo:
@@ -121,6 +122,6 @@ def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) ->
         line = ln.get_attribute("innerText")
         hi = h.get_attribute("innerText")
         lo = l.get_attribute("innerText")
-        odds_list += (oddshilotype(date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
+        odds_list += (oddshilotype(source='hkjc', date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
     
     return odds_list
