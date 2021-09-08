@@ -28,40 +28,54 @@ WEEKDAY_MAP = {
     }
 }
 
-def scrap(url: str, matchparser: Callable, matchparserparam: dict = {}, delay: int = 3) -> Tuple[Odds]:
+class HKJCScraperFuncs:
+    
+    def __init__(self, browser:webdriver) -> None:
+        self.browser = browser
 
-    browser = webdriver.Chrome("./chromedriver.exe")
+    def scrap_homedrawaway(self, delay: int=3) -> Tuple[Odds_HomeDrawAway]: 
+        return self.scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway, delay=delay)
 
-    browser.get(url)
+    def scrap_handicap(self, delay: int=3) -> Tuple[Odds_Handicap]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap, delay=delay)
 
-    oddslist = tuple()
+    def scrap_hilo(self, delay: int=3) -> Tuple[Odds_HiLo]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo, delay=delay)
 
-    while(True):
-        tables = WebDriverWait(browser, delay).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "couponTable")))
+    def scrap_cornerhilo(self, delay: int=3) -> Tuple[Odds_CornerHiLo]:
+        return self.scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo}, delay=delay)
 
-        update_time = datetime.now().replace(second=0, microsecond=0)
+    def scrap(self, url: str, matchparser: Callable, matchparserparam: dict = {}, delay: int = 3) -> Tuple[Odds]:
 
-        matches = []
-        for t in tables:
-            matches += t.find_elements_by_css_selector("div.couponRow.rAlt0")
-            matches += t.find_elements_by_css_selector("div.couponRow.rAlt1")
+        self.browser.get(url)
 
-        for m in matches:
-            try:
-                o = matchparser(m, update_time=update_time, **matchparserparam)
-                oddslist += o if isinstance(o, Iterable) else (o, )
-            except:
-                pass
+        oddslist = tuple()
 
-        next_btn = browser.find_elements_by_xpath("//*[text()='下頁']")
+        while(True):
+            tables = WebDriverWait(self.browser, delay).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "couponTable")))
 
-        if next_btn:
-            next_btn[0].click()
-        else:
-            break
+            update_time = datetime.now().replace(second=0, microsecond=0)
 
-    browser.close()
-    return oddslist
+            matches = []
+            for t in tables:
+                matches += t.find_elements_by_css_selector("div.couponRow.rAlt0")
+                matches += t.find_elements_by_css_selector("div.couponRow.rAlt1")
+
+            for m in matches:
+                try:
+                    o = matchparser(m, update_time=update_time, **matchparserparam)
+                    oddslist += o if isinstance(o, Iterable) else (o, )
+                except:
+                    pass
+
+            next_btn = self.browser.find_elements_by_xpath("//*[text()='下頁']")
+
+            if next_btn:
+                next_btn[0].click()
+            else:
+                break
+            
+        return oddslist
 
 
 def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway:
@@ -110,18 +124,3 @@ def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) ->
         odds_list += (oddshilotype(date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
     
     return odds_list
-
-
-def scrap_homedrawaway(delay: int=3) -> Tuple[Odds_HomeDrawAway]: 
-    return scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway, delay=delay)
-
-
-def scrap_handicap(delay: int=3) -> Tuple[Odds_Handicap]:
-    return scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap, delay=delay)
-
-def scrap_hilo(delay: int=3) -> Tuple[Odds_HiLo]:
-    return scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo, delay=delay)
-
-def scrap_cornerhilo(delay: int=3) -> Tuple[Odds_CornerHiLo]:
-    return scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo}, delay=delay)
-
