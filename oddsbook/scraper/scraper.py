@@ -1,6 +1,5 @@
-from abc import abstractclassmethod
 from selenium import webdriver
-from .hkjc_scraper import HKJCScraperFuncs
+from .hkjc_scraper_func import HKJCScraperFuncs
 
 class Scraper:
     def __init__(self, driver_path:str, lang:str, delay:int) -> None:

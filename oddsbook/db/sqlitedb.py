@@ -2,8 +2,8 @@ import os
 from typing import Tuple
 from sqlalchemy import create_engine
 from sqlalchemy import func, distinct
-from sqlalchemy.orm import sessionmaker, base
-from . import models
+from sqlalchemy.orm import sessionmaker
+from .. import models
 
 class SqliteDB:
     def __init__(self, dbpath:str = './oddsdb.sqlite') -> None:

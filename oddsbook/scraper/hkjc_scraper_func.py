@@ -4,40 +4,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
-from .models import Odds, Odds_CornerHiLo, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
+from ..models import Odds, Odds_CornerHiLo, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
+from ..conf import locale
 import re
-
-NEXT = {
-    'en' : 'NEXT',
-    'ch' : '下頁'
-}
-
-WEEKDAY_MAP = {
-    'en': {
-        'MON': 0,
-        'TUE': 1,
-        'WED': 2,
-        'THU': 3,
-        'FRI': 4,
-        'SAT': 5,
-        'SUN': 6
-    }, 
-    'ch': {
-        '星期一': 0,
-        '星期二': 1,
-        '星期三': 2,
-        '星期四': 3,
-        '星期五': 4,
-        '星期六': 5,
-        '星期日': 6
-    }
-}
 
 class HKJCScraperFuncs:
     
     def __init__(self, browser:webdriver, lang:str = 'ch', delay:int = 3) -> None:
         self.browser = browser
         self.lang = lang
+        if lang == 'ch':
+            self.locale = locale.ch
+        elif lang == 'en':
+            self.locale = locale.en
+        else:
+            self.locale = locale.ch
         self.delay = delay
 
     def scrap_homedrawaway(self) -> Tuple[Odds_HomeDrawAway]: 
@@ -75,7 +56,7 @@ class HKJCScraperFuncs:
                 except:
                     pass
 
-            next_btn = self.browser.find_elements_by_xpath(f"//*[text()='{NEXT[self.lang]}']")
+            next_btn = self.browser.find_elements_by_xpath(f"//*[text()='{self.locale['next']}']")
 
             if next_btn:
                 next_btn[0].click()
@@ -88,7 +69,7 @@ class HKJCScraperFuncs:
     def parse_homedrawaway(self, match_element, update_time:datetime) -> Odds_HomeDrawAway:
         
         wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=self.locale['weekdays'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
         teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
         oddsVal = match_element.find_elements_by_class_name("oddsVal")
         home = oddsVal[0].get_attribute("innerText")
@@ -101,7 +82,7 @@ class HKJCScraperFuncs:
     def parse_handicap(self, match_element, update_time:datetime) -> Odds_Handicap:
         
         wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=self.locale['weekdays'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
         cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
         teams = ''.join(re.match("^(.*)\[.*\](\s.*\s)(.*)\[.*\]$", cteams).groups())
         handicap = r'||'.join(re.match("^.*(\[.*\])\s.*\s.*(\[.*\])$", cteams).groups())
@@ -115,7 +96,7 @@ class HKJCScraperFuncs:
     def parse_hilo(self, match_element, update_time:datetime, oddshilotype = Odds_HiLo) -> Odds_HiLo:
         
         wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=self.locale['weekdays'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
         teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
         cline = match_element.find_element_by_class_name("cline")
         lines = cline.find_elements_by_xpath("div[contains(@class,'LineRow')]") 

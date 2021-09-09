@@ -1,6 +1,5 @@
 from typing import Iterable
 import xlwings as xw
-from .models import Odds
 
 ODDSTYPE_CONFIG = {
     'Odds_HomeDrawAway': {
@@ -22,8 +21,7 @@ ODDSTYPE_CONFIG = {
 }
 
 
-def populatebook(oddslist: Iterable):
-#def populatematch(odds: Odds):
+def add_all(oddslist: Iterable):
 
     wb = xw.Book("./oddsbook.xlsx")
     shtnames = [sht.name for sht in wb.sheets if sht != "TEMPLATE"]

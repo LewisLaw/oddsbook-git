@@ -1,8 +1,7 @@
-from sqlalchemy import sql
-from oddsbook.sqlitedb import SqliteDB
+from oddsbook.db.sqlitedb import SqliteDB
 import time as timer
-from oddsbook import booker
-from oddsbook import scraper
+from oddsbook.db import xlwingsbook
+from oddsbook.scraper import scraper
 from oddsbook import models
 
 def run(driver_path:str = './chromedriver.exe', lang:str='ch', delay: int = 3):
@@ -16,11 +15,11 @@ def run(driver_path:str = './chromedriver.exe', lang:str='ch', delay: int = 3):
     for s in scrapers:
         odds = s()
         if odds:
-            booker.populatebook(odds)
+            xlwingsbook.add_all(odds)
             sqlitedb.add_all(odds)
     
     for oddstype in (models.Odds_HomeDrawAway, models.Odds_Handicap, models.Odds_HiLo, models.Odds_CornerHiLo):
-        oddstype_str = booker.ODDSTYPE_CONFIG[oddstype.__name__]['columnheader']
+        oddstype_str = xlwingsbook.ODDSTYPE_CONFIG[oddstype.__name__]['columnheader']
         
         new_matches = sqlitedb.get_new_matches(oddstype)
         for m in new_matches:
@@ -48,29 +47,31 @@ import argparse
 import logging
 import logging.config
 from datetime import datetime
+from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser(description=r"Scrapping Odds infomation and populating to OddsBook.xlsx")
 parser.add_argument('-i', '--interval', type=int, default=0, help=r"Minutes of interval for updating odds after each run.")
 parser.add_argument('-d', '--delay', type=int, default=3, help=r"Seconds of delay on webscraping.")
 parser.add_argument('-l', '--lang', type=str, default='ch', help=r"Language of webpage to parse.")
-parser.add_argument('--webdriver', type=str, default='./chromedriver.exe', help=r"Path of the webdriver executable.")
+parser.add_argument('--webdriver_path', type=str, default='./chromedriver.exe', help=r"Path of the webdriver executable.")
 parser.add_argument('--debug', action='store_true', help=r"Log debug message.")
 argv = parser.parse_args()
 
 if __name__ == "__main__":
 
-    logging.config.fileConfig(fname='./oddsbook/logging.conf', disable_existing_loggers=False)
-    #logging.basicConfig(filename='oddsbook.log', filemode='w', level=logging.DEBUG if argv.debug else logging.INFO)
+    load_dotenv('./.env')
+    logging.config.fileConfig(fname='./oddsbook/conf/logging.conf', disable_existing_loggers=False)
     logger = logging.getLogger(__name__)
 
     while True:
-        logging.info(f"Start Running at {datetime.now()}")
+        logging.info(f"Start Running...")
         logging.debug(argv)
         try:
-            run(argv.webdriver, argv.lang, argv.delay)
+            #run(argv.webdriver_path, argv.lang, argv.delay)
             logging.info("Run Successful!")
             if argv.interval <= 0: break
         except Exception as e:
             logging.error("Exception occurred", exc_info=True)
         finally:
+            logging.info(f"Wait {argv.interval} mins for Next Run...")
             timer.sleep(argv.interval * 60)
