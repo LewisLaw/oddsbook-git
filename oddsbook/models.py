@@ -192,6 +192,3 @@ class Odds_CornerHiLo(Odds):
             'sa': Column(Float)
         }
     )
-
-engine = create_engine(r'sqlite:///./oddsdb.sqlite')
-Base.metadata.create_all(engine)

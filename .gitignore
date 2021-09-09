@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 ~$oddsbook*.xlsx
-config.ini
+*.conf

@@ -29,6 +29,7 @@ def populatebook(oddslist: Iterable):
     shtnames = [sht.name for sht in wb.sheets if sht != "TEMPLATE"]
     
     with wb.app.properties(screen_updating = False):
+        
         for odds in oddslist:
             oddstype = type(odds).__name__
             oddsconfig = ODDSTYPE_CONFIG[oddstype]
