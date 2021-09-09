@@ -53,7 +53,7 @@ parser = argparse.ArgumentParser(description=r"Scrapping Odds infomation and pop
 parser.add_argument('-i', '--interval', type=int, default=0, help=r"Minutes of interval for updating odds after each run.")
 parser.add_argument('-d', '--delay', type=int, default=3, help=r"Seconds of delay on webscraping.")
 parser.add_argument('-l', '--lang', type=str, default='ch', help=r"Language of webpage to parse.")
-parser.add_argument('--webdriver_path', type=str, default='./chromedriver.exe', help=r"Path of the webdriver executable.")
+parser.add_argument('-p', '--webdriver_path', type=str, default='./chromedriver.exe', help=r"Path of the webdriver executable.")
 parser.add_argument('--debug', action='store_true', help=r"Log debug message.")
 argv = parser.parse_args()
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         logging.info(f"Start Running...")
         logging.debug(argv)
         try:
-            #run(argv.webdriver_path, argv.lang, argv.delay)
+            run(argv.webdriver_path, argv.lang, argv.delay)
             logging.info("Run Successful!")
             if argv.interval <= 0: break
         except Exception as e:
