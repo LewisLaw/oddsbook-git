@@ -4,8 +4,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
-from .model import Odds, Odds_CornerHiLo, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
+from .models import Odds, Odds_CornerHiLo, Odds_Handicap, Odds_HiLo, Odds_HomeDrawAway
 import re
+
+NEXT = {
+    'en' : 'NEXT',
+    'ch' : '下頁'
+}
 
 WEEKDAY_MAP = {
     'en': {
@@ -30,21 +35,22 @@ WEEKDAY_MAP = {
 
 class HKJCScraperFuncs:
     
-    def __init__(self, browser:webdriver, delay:int = 3) -> None:
+    def __init__(self, browser:webdriver, lang:str = 'ch', delay:int = 3) -> None:
         self.browser = browser
+        self.lang = lang
         self.delay = delay
 
     def scrap_homedrawaway(self) -> Tuple[Odds_HomeDrawAway]: 
-        return self.scrap("https://bet.hkjc.com/football/index.aspx?lang=ch", parse_homedrawaway)
+        return self.scrap(f"https://bet.hkjc.com/football/index.aspx?lang={self.lang}", self.parse_homedrawaway)
 
     def scrap_handicap(self) -> Tuple[Odds_Handicap]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang=ch", parse_handicap)
+        return self.scrap(f"https://bet.hkjc.com/football/odds/odds_hdc.aspx?lang={self.lang}", self.parse_handicap)
 
     def scrap_hilo(self) -> Tuple[Odds_HiLo]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_hil.aspx?lang=ch", parse_hilo)
+        return self.scrap(f"https://bet.hkjc.com/football/odds/odds_hil.aspx?lang={self.lang}", self.parse_hilo)
 
     def scrap_cornerhilo(self) -> Tuple[Odds_CornerHiLo]:
-        return self.scrap("https://bet.hkjc.com/football/odds/odds_chl.aspx?lang=ch", parse_hilo, {'oddshilotype': Odds_CornerHiLo})
+        return self.scrap(f"https://bet.hkjc.com/football/odds/odds_chl.aspx?lang={self.lang}", self.parse_hilo, {'oddshilotype': Odds_CornerHiLo})
 
     def scrap(self, url: str, matchparser: Callable, matchparserparam: dict = {}) -> Tuple[Odds]:
 
@@ -69,7 +75,7 @@ class HKJCScraperFuncs:
                 except:
                     pass
 
-            next_btn = self.browser.find_elements_by_xpath("//*[text()='下頁']")
+            next_btn = self.browser.find_elements_by_xpath(f"//*[text()='{NEXT[self.lang]}']")
 
             if next_btn:
                 next_btn[0].click()
@@ -79,49 +85,49 @@ class HKJCScraperFuncs:
         return oddslist
 
 
-def parse_homedrawaway(match_element, update_time:datetime) -> Odds_HomeDrawAway:
-    
-    wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-    match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
-    teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
-    oddsVal = match_element.find_elements_by_class_name("oddsVal")
-    home = oddsVal[0].get_attribute("innerText")
-    draw = oddsVal[1].get_attribute("innerText")
-    away = oddsVal[2].get_attribute("innerText")
+    def parse_homedrawaway(self, match_element, update_time:datetime) -> Odds_HomeDrawAway:
+        
+        wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
+        oddsVal = match_element.find_elements_by_class_name("oddsVal")
+        home = oddsVal[0].get_attribute("innerText")
+        draw = oddsVal[1].get_attribute("innerText")
+        away = oddsVal[2].get_attribute("innerText")
 
-    return Odds_HomeDrawAway(source='hkjc', date=match_date, teams=teams, home=home, draw=draw, away=away, update_time=update_time)
-
-
-def parse_handicap(match_element, update_time:datetime) -> Odds_Handicap:
-    
-    wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-    match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
-    cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
-    teams = ''.join(re.match("^(.*)\[.*\](\s.*\s)(.*)\[.*\]$", cteams).groups())
-    handicap = r'||'.join(re.match("^.*(\[.*\])\s.*\s.*(\[.*\])$", cteams).groups())
-    oddsVal = match_element.find_elements_by_class_name("oddsVal")
-    home = oddsVal[0].get_attribute("innerText")
-    away = oddsVal[1].get_attribute("innerText")
-
-    return Odds_Handicap(source='hkjc', date=match_date, teams=teams, home=home, away=away, handicap=handicap, update_time=update_time)
+        return Odds_HomeDrawAway(source='hkjc', date=match_date, teams=teams, home=home, draw=draw, away=away, update_time=update_time)
 
 
-def parse_hilo(match_element, update_time:datetime, oddshilotype = Odds_HiLo) -> Odds_HiLo:
-    
-    wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
-    match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP['ch'][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
-    teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
-    cline = match_element.find_element_by_class_name("cline")
-    lines = cline.find_elements_by_xpath("div[contains(@class,'LineRow')]") 
-    codds = match_element.find_elements_by_xpath("div[@class='codds']")
-    his = codds[0].find_elements_by_xpath("div[contains(@class,'LineRow')]")
-    los = codds[1].find_elements_by_xpath("div[contains(@class,'LineRow')]")
+    def parse_handicap(self, match_element, update_time:datetime) -> Odds_Handicap:
+        
+        wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        cteams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
+        teams = ''.join(re.match("^(.*)\[.*\](\s.*\s)(.*)\[.*\]$", cteams).groups())
+        handicap = r'||'.join(re.match("^.*(\[.*\])\s.*\s.*(\[.*\])$", cteams).groups())
+        oddsVal = match_element.find_elements_by_class_name("oddsVal")
+        home = oddsVal[0].get_attribute("innerText")
+        away = oddsVal[1].get_attribute("innerText")
 
-    odds_list = tuple()
-    for ln, h, l in zip(lines, his, los):
-        line = ln.get_attribute("innerText")
-        hi = h.get_attribute("innerText")
-        lo = l.get_attribute("innerText")
-        odds_list += (oddshilotype(source='hkjc', date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
-    
-    return odds_list
+        return Odds_Handicap(source='hkjc', date=match_date, teams=teams, home=home, away=away, handicap=handicap, update_time=update_time)
+
+
+    def parse_hilo(self, match_element, update_time:datetime, oddshilotype = Odds_HiLo) -> Odds_HiLo:
+        
+        wkday = match_element.find_element_by_class_name("cday").get_attribute("innerText")[:3]
+        match_date=date.today() + timedelta(days = -1 if (wkdiff:=WEEKDAY_MAP[self.lang][wkday] - date.today().weekday()) == 6 else wkdiff if wkdiff >= -1 else wkdiff + 7)
+        teams = match_element.find_element_by_class_name("cteams").find_element_by_tag_name("a").get_attribute("text")
+        cline = match_element.find_element_by_class_name("cline")
+        lines = cline.find_elements_by_xpath("div[contains(@class,'LineRow')]") 
+        codds = match_element.find_elements_by_xpath("div[@class='codds']")
+        his = codds[0].find_elements_by_xpath("div[contains(@class,'LineRow')]")
+        los = codds[1].find_elements_by_xpath("div[contains(@class,'LineRow')]")
+
+        odds_list = tuple()
+        for ln, h, l in zip(lines, his, los):
+            line = ln.get_attribute("innerText")
+            hi = h.get_attribute("innerText")
+            lo = l.get_attribute("innerText")
+            odds_list += (oddshilotype(source='hkjc', date=match_date, teams=teams, line=line, hi=hi, lo=lo, update_time=update_time), )
+        
+        return odds_list

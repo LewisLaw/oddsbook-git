@@ -3,8 +3,10 @@ from selenium import webdriver
 from .hkjc_scraper import HKJCScraperFuncs
 
 class Scraper:
-    def __init__(self, driver_path:str) -> None:
+    def __init__(self, driver_path:str, lang:str, delay:int) -> None:
         self.browser = browser_selector(driver_path)
+        self.lang = lang
+        self.delay = delay
     def __del__(self) -> None:
         try:
             self.browser.close()
@@ -13,9 +15,9 @@ class Scraper:
 
 
 class HKJCScraper(Scraper):
-    def __init__(self, driver_path: str) -> None:
-        super().__init__(driver_path)
-        funcs = HKJCScraperFuncs(self.browser)
+    def __init__(self, driver_path:str, lang:str, delay:int) -> None:
+        super().__init__(driver_path, lang, delay)
+        funcs = HKJCScraperFuncs(self.browser, lang, delay)
         self.scrap_homedrawaway = funcs.scrap_homedrawaway
         self.scrap_handicap = funcs.scrap_handicap
         self.scrap_hilo = funcs.scrap_hilo
